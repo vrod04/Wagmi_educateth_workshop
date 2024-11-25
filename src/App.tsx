@@ -3,9 +3,27 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import ConnectButton from './components/ConnectWallet'
+import { ADDRESS_CONTRACT, ABI } from './contracts/erc20'
+import { useAccount, useReadContract } from 'wagmi'
+
 
 function App() {
   //const [count, setCount] = useState(0)
+  const { address, isConnected } = useAccount();
+  const { data: nameContract } = useReadContract({
+    abi: ABI,
+    address: ADDRESS_CONTRACT,
+    functionName: 'name',
+  }
+  );
+  const { data: balanceOf } = useReadContract({
+    abi: ABI,
+    address: ADDRESS_CONTRACT,
+    functionName: 'balanceOf',
+    args: [address],
+  }
+  );
+
 
   return (
     <>
@@ -17,7 +35,20 @@ function App() {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <h1>Vite + React</h1>
+      <h1 className='title'>WawiCoin Test Faucet</h1>
+      {isConnected ? (
+          <>
+            <p>Connected wallet: {address}</p>
+            <p>
+              Token Name: {nameContract}
+              <br />
+              Balance: {balanceOf.toString()}
+            </p>
+          </>
+        ) : (
+          <p>Not connected</p>
+        )
+      }
       <ConnectButton />
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
