@@ -23,7 +23,7 @@ const metadata = {
 const networks: [AppKitNetwork, ...AppKitNetwork[]] = [arbitrum, arbitrumSepolia]
 
 // 4. Create Wagmi Adapter
-const wagmiAdapter = new WagmiAdapter({
+export const wagmiAdapter = new WagmiAdapter({
   networks,
   projectId,
   ssr: true

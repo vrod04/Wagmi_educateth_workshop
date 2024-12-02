@@ -1,29 +1,55 @@
-// import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import ConnectButton from './components/ConnectWallet'
 import { ADDRESS_CONTRACT, ABI } from './contracts/erc20'
-import { useAccount, useReadContract } from 'wagmi'
+import { useAccount, useReadContract, useWriteContract } from 'wagmi'
+import { waitForTransactionReceipt } from 'viem/actions'
+import { wagmiAdapter } from './WalletContext'
 
 
 function App() {
-  //const [count, setCount] = useState(0)
+  const [amount, setAmount] = useState(0)
   const { address, isConnected } = useAccount();
+  const { writeContractAsync, isSuccess, isError } = useWriteContract();
+
   const { data: nameContract } = useReadContract({
     abi: ABI,
     address: ADDRESS_CONTRACT,
     functionName: 'name',
-  }
-  );
-  const { data: balanceOf } = useReadContract({
+  });
+  const { data: balanceOf, refetch } = useReadContract({
     abi: ABI,
     address: ADDRESS_CONTRACT,
     functionName: 'balanceOf',
     args: [address],
   }
   );
+  const mintF = async () => {
+    if (amount <= 0 ) {
+      alert('Amount must be greater than 0')
+      return;
+    }
+    const txHash = writeContractAsync({
+      address: ADDRESS_CONTRACT,
+      abi: ABI,
+      functionName: 'mint',
+      args: [address, amount]
+    })
+    await waitForTransactionReceipt(wagmiAdapter.wagmiConfig,{
+      hash: txHash
+    })
+  };
 
+  useEffect(() => {
+    if (isSuccess) {
+      refetch()
+      setAmount(0)
+    }
+    if (isError) {
+      alert('Transaction failed')}
+  }, [isSuccess, isError])
 
   return (
     <>
@@ -39,11 +65,21 @@ function App() {
       {isConnected ? (
           <>
             <p>Connected wallet: {address}</p>
-            <p>
-              Token Name: {nameContract}
+            <p>{nameContract}
               <br />
-              Balance: {balanceOf.toString()}
+              Balance: {balanceOf && balanceOf.toString()}
             </p>
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              value= {amount}
+              name='amount'
+              title='Amount'
+            />
+            <button onClick={mintF}>
+              Mint
+            </button>
           </>
         ) : (
           <p>Not connected</p>
